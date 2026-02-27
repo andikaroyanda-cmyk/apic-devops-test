@@ -1,44 +1,30 @@
-name: Sync Discovered API with APIConnect
+name: Sync Discovered API via CURL
 
-on: [pull_request, workflow_dispatch, push]
+on: [push, workflow_dispatch]
 
 env:
   API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
-  PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: env5717743
-  API_FILES: api-demo.yaml 
+  API_FILE: api-demo.yaml # Pastikan file ini ada di repo GitHub Bapak
 
 jobs:
-  run-discovery:
-    # GANTI KE VERSION 20.04 (Sangat Krusial)
-    runs-on: ubuntu-20.04 
-    env:
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+  manual-sync:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Difference
-      id: difference-output
-      run: |
-        # Force kirim file jika diff bermasalah
-        DIFF=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs || echo "")
-        if [ -z "$DIFF" ]; then DIFF="${{ env.API_FILES }}"; fi
-        echo "action_updates=$DIFF" >> $GITHUB_OUTPUT
-
-    - uses: ibm-apiconnect/apic-discovery-action@main
-      id: discover-apis
-      with:
-        api_host: ${{ env.API_HOST }}
-        platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
-        provider_org: ${{ env.PROVIDER_ORG }}
-        api_key: ${{ secrets.apicApikey }}
-        api_files: ${{ env.API_FILES }}
-        resync_check: true
-        git_diff: ${{ steps.difference-output.outputs.action_updates }}
-        insecure_skip_tls_verify: true 
-
-    - name: Display the action-result
-      run: |
-        echo "Result: ${{ steps.discover-apis.outputs.action-result }}"
+      - name: Push API to IBM Discovery via CURL
+        run: |
+          echo "Sending $API_FILE to IBM Cloud..."
+          curl --location --request POST "https://${{ env.API_HOST }}/platform-api/orgs/${{ env.PROVIDER_ORG }}/discovery/github" \
+          --insecure \
+          --header "Authorization: Bearer ${{ secrets.apicApikey }}" \
+          --header "Content-Type: application/json" \
+          --data "{
+            \"api_files\": [\"$(cat ${{ env.API_FILE }} | base64 -w 0)\"],
+            \"resync_check\": true
+          }"
+          
+      - name: Check Status
+        run: echo "Proses selesai. Silakan cek menu Discover di APIC."
