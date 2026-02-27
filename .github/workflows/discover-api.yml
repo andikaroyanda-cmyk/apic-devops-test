@@ -1,12 +1,12 @@
 name: Sync Discovered API with APIConnect
 
-on: [pull_request, workflow_dispatch, push] # Akan jalan setiap ada push atau manual trigger
+on: [pull_request, workflow_dispatch, push]
 
 env:
-  API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com # Dari URL Bapak
+  API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
-  PROVIDER_ORG: <ISI_DENGAN_NAMA_PORG_BAPAK> # Contoh: 'production' atau 'sandbox'
-  API_FILES: api-demo.yaml # Sesuaikan dengan nama file OpenAPI Bapak di repo
+  PROVIDER_ORG: env5717743 # <-- SESUAIKAN: Ini biasanya nama yang ada di URL APIC Bapak
+  API_FILES: api-demo.yaml 
 
 jobs:
   run-discovery:
@@ -23,10 +23,12 @@ jobs:
         api_host: ${{ env.API_HOST }}
         platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
         provider_org: ${{ env.PROVIDER_ORG }}
-        api_key: ${{ secrets.apicApikey }} # Mengambil dari secret yang kita buat tadi
+        api_key: ${{ secrets.apicApikey }}
         api_files: ${{ env.API_FILES }}
-        resync_check: ${{ true }}
+        resync_check: true
         git_diff: ${{ steps.difference-output.outputs.action_updates }}
+        # TAMBAHKAN BARIS DI BAWAH INI UNTUK FIX SSL ERROR:
+        insecure_skip_tls_verify: true 
     - name: Display the action-result
       run: |
         echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
