@@ -5,7 +5,7 @@ on: [push, workflow_dispatch]
 env:
   API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
   PROVIDER_ORG: env5717743
-  API_FILE: api-demo.yaml # Pastikan file ini ada di repo GitHub Bapak
+  API_FILE: test-api.yaml # Pastikan nama file ini persis (cek besar kecil hurufnya)
 
 jobs:
   manual-sync:
@@ -14,17 +14,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Push API to IBM Discovery via CURL
+      - name: Push API to IBM Discovery
         run: |
-          echo "Sending $API_FILE to IBM Cloud..."
+          echo "Sending ${{ env.API_FILE }} to IBM Cloud..."
+          # Kita pakai -F (form-data) karena biasanya endpoint discovery lebih stabil terima file asli
           curl --location --request POST "https://${{ env.API_HOST }}/platform-api/orgs/${{ env.PROVIDER_ORG }}/discovery/github" \
           --insecure \
           --header "Authorization: Bearer ${{ secrets.apicApikey }}" \
-          --header "Content-Type: application/json" \
-          --data "{
-            \"api_files\": [\"$(cat ${{ env.API_FILE }} | base64 -w 0)\"],
-            \"resync_check\": true
-          }"
+          --form "api_files=@${{ env.API_FILE }}" \
+          --form "resync_check=true"
           
       - name: Check Status
-        run: echo "Proses selesai. Silakan cek menu Discover di APIC."
+        run: echo "Proses selesai. Silakan refresh halaman Discover di APIC."
