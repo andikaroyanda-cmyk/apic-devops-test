@@ -5,7 +5,7 @@ on: [pull_request, workflow_dispatch, push]
 env:
   API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
-  PROVIDER_ORG: env5717743 # <-- SESUAIKAN: Ini biasanya nama yang ada di URL APIC Bapak
+  PROVIDER_ORG: env5717743
   API_FILES: api-demo.yaml 
 
 jobs:
@@ -13,10 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Set Node to Ignore SSL Globally
+      run: echo "NODE_TLS_REJECT_UNAUTHORIZED=0" >> $GITHUB_ENV
+
     - name: Difference
       id: difference-output
       run: |
-        echo "action_updates=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.before }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
+        # Menggunakan fallback jika git diff gagal pada push pertama
+        echo "action_updates=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo '${{ env.API_FILES }}')" >> $GITHUB_OUTPUT
+
     - uses: ibm-apiconnect/apic-discovery-action@main
       id: discover-apis
       with:
@@ -27,8 +33,8 @@ jobs:
         api_files: ${{ env.API_FILES }}
         resync_check: true
         git_diff: ${{ steps.difference-output.outputs.action_updates }}
-        # TAMBAHKAN BARIS DI BAWAH INI UNTUK FIX SSL ERROR:
-        insecure_skip_tls_verify: true 
+        insecure_skip_tls_verify: true #
+
     - name: Display the action-result
       run: |
-        echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
+        echo "Result: ${{ steps.discover-apis.outputs.action-result }}"
