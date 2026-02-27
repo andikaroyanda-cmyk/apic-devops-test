@@ -1,11 +1,10 @@
 swagger: '2.0'
 info:
-  title: API Test Jenkins
-  name: api-test-jenkins
+  title: Test Berhasil
   version: 1.0.0
 paths:
-  /hello:
+  /check:
     get:
       responses:
-        '200':
-          description: success
+        200:
+          description: OK
