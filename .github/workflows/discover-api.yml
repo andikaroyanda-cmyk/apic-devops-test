@@ -4,39 +4,30 @@ on: [pull_request, workflow_dispatch, push]
 
 env:
   API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
-  PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: env5717743
-  API_FILES: test-api.yaml # Pastikan nama filenya sama persis di repo Bapak
+  API_FILES: test-api.yaml
 
 jobs:
   run-discovery:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2 # Penting agar git diff bisa jalan
-        
-    - name: Difference
-      id: difference-output
-      run: |
-        # Logika diff agar tidak error di commit pertama
-        DIFF=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs || echo "${{ env.API_FILES }}")
-        echo "action_updates=$DIFF" >> $GITHUB_OUTPUT
-        
-    - uses: ibm-apiconnect/apic-discovery-action@main
-      id: discover-apis
-      with:
-        api_host: ${{ env.API_HOST }}
-        platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
-        provider_org: ${{ env.PROVIDER_ORG }}
-        api_key: ${{ secrets.apicApikey }}
-        api_files: ${{ env.API_FILES }}
-        resync_check: true
-        git_diff: ${{ steps.difference-output.outputs.action_updates }}
-        # INI KUNCINYA AGAR TIDAK ERROR SSL (Sesuai dokumentasi)
-        insecure_skip_tls_verify: true 
 
-    - name: Display the action-result
+    - name: Push API to Discovery via Force-CURL
       run: |
-        echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
-        echo "End"
+        echo "Bypass SSL and Sending ${{ env.API_FILES }}..."
+        
+        # Kita bungkus file jadi base64 agar aman di JSON
+        FILE_CONTENT=$(cat ${{ env.API_FILES }} | base64 -w 0)
+        
+        curl --location --request POST "https://${{ env.API_HOST }}/platform-api/orgs/${{ env.PROVIDER_ORG }}/discovery/github" \
+          --insecure \
+          --header "Authorization: Bearer ${{ secrets.apicApikey }}" \
+          --header "Content-Type: application/json" \
+          --data "{
+            \"api_files\": [\"$FILE_CONTENT\"],
+            \"resync_check\": true
+          }"
+          
+    - name: Final Check
+      run: echo "Jika CURL di atas 200/201 OK, langsung cek menu Discover > Sources!"
