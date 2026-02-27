@@ -10,18 +10,22 @@ env:
 
 jobs:
   run-discovery:
-    runs-on: ubuntu-latest
+    # GANTI KE VERSION 20.04 (Sangat Krusial)
+    runs-on: ubuntu-20.04 
+    env:
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set Node to Ignore SSL Globally
-      run: echo "NODE_TLS_REJECT_UNAUTHORIZED=0" >> $GITHUB_ENV
+      with:
+        fetch-depth: 2
 
     - name: Difference
       id: difference-output
       run: |
-        # Menggunakan fallback jika git diff gagal pada push pertama
-        echo "action_updates=$(git diff --name-only HEAD^ HEAD 2>/dev/null || echo '${{ env.API_FILES }}')" >> $GITHUB_OUTPUT
+        # Force kirim file jika diff bermasalah
+        DIFF=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs || echo "")
+        if [ -z "$DIFF" ]; then DIFF="${{ env.API_FILES }}"; fi
+        echo "action_updates=$DIFF" >> $GITHUB_OUTPUT
 
     - uses: ibm-apiconnect/apic-discovery-action@main
       id: discover-apis
@@ -33,7 +37,7 @@ jobs:
         api_files: ${{ env.API_FILES }}
         resync_check: true
         git_diff: ${{ steps.difference-output.outputs.action_updates }}
-        insecure_skip_tls_verify: true #
+        insecure_skip_tls_verify: true 
 
     - name: Display the action-result
       run: |
