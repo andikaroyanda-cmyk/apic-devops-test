@@ -6,7 +6,7 @@ env:
   API_HOST: us-east-a.apiconnect.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: env5717743
-  API_FILES: jne.yaml
+  API_FILES: test-api.yaml
 
 jobs:
   run-discovery:
