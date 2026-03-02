@@ -1,8 +1,22 @@
 swagger: '2.0'
 info:
-  title: API Test Jenkins
-  name: api-test-jenkins
+  title: API Test Jenkins1
   version: 1.0.0
+  description: API test untuk validasi push dari GitHub ke APIC
+
+# Tambahkan ini untuk menghentikan Error 500
+x-ibm-configuration:
+  enforced: true
+  phase: realized
+  gateway: datapower-api-gateway
+  assembly:
+    execute:
+      - map: # Contoh logic sederhana agar file dianggap 'lengkap'
+          title: map
+          inputs: {}
+          outputs: {}
+          actions: []
+
 paths:
   /hello:
     get:
