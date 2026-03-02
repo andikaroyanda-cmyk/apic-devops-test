@@ -1,25 +1,25 @@
-name: Test APIC Connection
+name: Audit Izin API Connect
 
 on: [push, workflow_dispatch]
 
 jobs:
-  test-auth:
+  audit-permissions:
     runs-on: ubuntu-latest
     steps:
-      - name: Install APIC CLI
-        run: |
-          curl -LO https://itpro-apic-production.s3.us-east.cloud-object-storage.appdomain.cloud/apic-linux-amd64
-          chmod +x apic-linux-amd64
-          sudo mv apic-linux-amd64 /usr/local/bin/apic
-
-      - name: Check My Access
+      - name: Audit Akses Org & Katalog
         env:
-          SERVER: us-east-a.apiconnect.automation.ibm.com
           API_KEY: ${{ secrets.apicApikey }}
+          ORG: env5717743
+          SERVER: platform-api.us-east-a.apiconnect.automation.ibm.com
         run: |
-          # Login
-          apic login --server $SERVER --sso --apiKey $API_KEY
-          
-          # Lihat daftar organisasi yang bisa diakses oleh Kunci ini
-          echo "--- DAFTAR ORGANISASI ANDA ---"
-          apic orgs:list --server $SERVER --sso --apiKey $API_KEY
+          echo "### 1. MENGECEK AKSES ORGANISASI ###"
+          # Perintah ini akan gagal jika Anda bukan Org Admin/Owner
+          curl -s -X GET "https://$SERVER/api/orgs/$ORG" \
+               -H "Authorization: Bearer $API_KEY" \
+               -H "Accept: application/json" | grep -E "name|title|error" || echo "Akses Org Gagal/Kosong"
+
+          echo -e "\n### 2. MENGECEK AKSES KATALOG (SANDBOX) ###"
+          # Perintah ini akan berhasil jika Anda minimal punya akses Developer di Katalog
+          curl -s -X GET "https://$SERVER/api/orgs/$ORG/catalogs" \
+               -H "Authorization: Bearer $API_KEY" \
+               -H "Accept: application/json" | grep -E "name|title|error" || echo "Akses Katalog Gagal"
