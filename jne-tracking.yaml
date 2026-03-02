@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: JNE Tracking API
   description: API untuk melacak kiriman paket JNE.
-  version: 1.0.0
+  version: 1.0.1
 paths:
   /track:
     get:
