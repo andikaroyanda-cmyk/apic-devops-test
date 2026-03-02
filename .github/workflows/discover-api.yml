@@ -1,33 +1,44 @@
 name: Sync Discovered API with APIConnect
 
-on: [pull_request, workflow_dispatch, push]
+on: 
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main  # Ganti jika nama branch utama Anda bukan 'main'
 
 env:
-  API_HOST: env5717743.a-vir-c1.apiconnect.ipaas.automation.ibm.com
+  API_HOST: us-east-a.apiconnect.automation.ibm.com
+  PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: env5717743
-  API_FILES: test-api.yaml
+  API_FILES: jne-tracking.yaml  # Nama file yang kita buat di atas
 
 jobs:
   run-discovery:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Penting agar git diff bisa membaca history
 
-    - name: Push API to Discovery via Force-CURL
+    - name: Difference
+      id: difference-output
       run: |
-        echo "Bypass SSL and Sending ${{ env.API_FILES }}..."
-        
-        # Kita bungkus file jadi base64 agar aman di JSON
-        FILE_CONTENT=$(cat ${{ env.API_FILES }} | base64 -w 0)
-        
-        curl --location --request POST "https://${{ env.API_HOST }}/platform-api/orgs/${{ env.PROVIDER_ORG }}/discovery/github" \
-          --insecure \
-          --header "Authorization: Bearer ${{ secrets.apicApikey }}" \
-          --header "Content-Type: application/json" \
-          --data "{
-            \"api_files\": [\"$FILE_CONTENT\"],
-            \"resync_check\": true
-          }"
-          
-    - name: Final Check
-      run: echo "Jika CURL di atas 200/201 OK, langsung cek menu Discover > Sources!"
+        # Mengambil daftar file yang berubah
+        echo "action_updates=$(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | xargs)" >> $GITHUB_OUTPUT
+
+    - name: Push to API Connect
+      uses: ibm-apiconnect/apic-discovery-action@main
+      id: discover-apis
+      with:
+        api_host: ${{ env.API_HOST }}
+        platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
+        provider_org: ${{ env.PROVIDER_ORG }}
+        api_key: ${{ secrets.apicApikey }}
+        api_files: ${{ env.API_FILES }}
+        resync_check: true
+        git_diff: ${{ steps.difference-output.outputs.action_updates }}
+
+    - name: Display Result
+      run: |
+        echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
