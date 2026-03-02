@@ -1,25 +1,10 @@
 openapi: 3.0.0
 info:
-  title: JNE Tracking API
-  description: API untuk melacak kiriman paket JNE.
-  version: 1.0.1
+  title: JNE Tracking
+  version: 1.0.2
 paths:
-  /track:
+  /status:
     get:
-      summary: Ambil status pengiriman
-      parameters:
-        - name: awb
-          in: query
-          required: true
-          description: Nomor resi JNE
-          schema:
-            type: string
       responses:
         '200':
-          description: Data ditemukan
-          content:
-            application/json:
-              example:
-                status: "DELIVERED"
-                receiver: "Budi Santoso"
-                date: "2026-03-02"
+          description: OK
