@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  title: JNE Tracking API Official
+  title: JNE Tracking Baru 99
   description: API untuk melakukan pelacakan resi JNE secara real-time.
   version: 1.0.0
   contact:
