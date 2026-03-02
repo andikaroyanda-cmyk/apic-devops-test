@@ -1,10 +1,18 @@
-openapi: 3.0.0
-info:
-  title: JNE Tracking
-  version: 1.0.6
-paths:
-  /status:
-    get:
-      responses:
-        '200':
-          description: OK
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "JNE Tracking",
+    "version": "1.0.6"
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}
