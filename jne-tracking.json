@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "JNE Tracking",
+    "title": "JNE Tracking json",
     "version": "1.0.6"
   },
   "paths": {
