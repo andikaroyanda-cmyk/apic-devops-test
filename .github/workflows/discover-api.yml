@@ -1,64 +1,62 @@
-name: Audit Izin API Connect Final
+name: Sync API to APIC Drafts
 
 on: [push, workflow_dispatch]
 
 jobs:
-  audit-permissions:
+  sync-api:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Tes Koneksi & Token IAM
-        id: iam_token
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Access Token & Push API
         env:
-          # PAKAI NAMA SECRET BARU ANDA DI SINI
-          API_KEY: ${{ secrets.APIC_APIKEY_ANDIKA_2026 }}
+          MY_API_KEY: ${{ secrets.APIC_APIKEY_ANDIKA_2026 }}
+          ORG: env5717743
+          SERVER: platform-api.us-east-a.apiconnect.automation.ibm.com
+          FILE_PATH: "path/ke/file/api_anda.json" # GANTI DENGAN PATH FILE JSON ANDA
         run: |
-          echo "### MENGECEK VALIDITAS API KEY BARU ###"
-          RESPONSE=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" \
-               -H "Content-Type: application/x-www-form-urlencoded" \
-               -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=$API_KEY")
-          
-          if echo "$RESPONSE" | grep -q "access_token"; then
-            echo "✅ API Key Valid: Berhasil login ke IBM Cloud."
-          else
-            echo "❌ API Key TIDAK VALID: Cek penulisan Secret APIC_APIKEY_ANDIKA_2026."
+          # 1. Mendapatkan Access Token (Sesuai Gambar Anda)
+          echo "### STEP 1: LOGIN ###"
+          RESPONSE=$(curl -s -X POST "https://$SERVER/api/token" \
+               -H "Content-Type: application/json" \
+               -H "Accept: application/json" \
+               -d "{
+                 \"api_key\": \"$MY_API_KEY\",
+                 \"grant_type\": \"api_key\",
+                 \"client_id\": \"149625d1-de09-46e1-903a-3c0957097c2f\",
+                 \"client_secret\": \"3d7e8f4f-d562-40ce-88de-a656f6b13f9e\"
+               }")
+
+          TOKEN=$(echo $RESPONSE | jq -r .access_token)
+
+          if [ "$TOKEN" == "null" ]; then
+            echo "❌ Login Gagal!"
             echo "$RESPONSE" | jq .
             exit 1
           fi
+          echo "✅ Login Berhasil."
 
-      - name: 2. Audit Akses Org & Katalog
-        env:
-          API_KEY: ${{ secrets.APIC_APIKEY_ANDIKA_2026 }}
-          ORG: env5717743
-          SERVER: platform-api.us-east-a.apiconnect.automation.ibm.com
-        run: |
-          # Ambil Token IAM
-          TOKEN=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" \
-               -H "Content-Type: application/x-www-form-urlencoded" \
-               -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=$API_KEY" | jq -r .access_token)
-
-          echo -e "\n### 2a. MENGECEK AKSES ORGANISASI ($ORG) ###"
-          ORG_CHECK=$(curl -s -X GET "https://$SERVER/api/orgs/$ORG" \
-               -H "Authorization: Bearer $TOKEN" \
-               -H "Accept: application/json")
+          # 2. Push File API ke Drafts (Provider Org)
+          echo "### STEP 2: PUSH API KE DRAFTS ###"
           
-          if echo "$ORG_CHECK" | grep -q "\"name\""; then
-            echo "✅ Akses Org Berhasil!"
-            echo "$ORG_CHECK" | jq -r '"Organisasi: " + .title'
-          else
-            echo "❌ Akses Org Gagal: Anda mungkin tidak punya izin di level Org ini."
-            echo "$ORG_CHECK" | jq .
+          # Pastikan file ada
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "❌ File $FILE_PATH tidak ditemukan!"
+            exit 1
           fi
 
-          echo -e "\n### 2b. MENGECEK AKSES KATALOG (SANDBOX) ###"
-          CAT_CHECK=$(curl -s -X GET "https://$SERVER/api/orgs/$ORG/catalogs" \
+          UPLOAD_RES=$(curl -s -X POST "https://$SERVER/api/orgs/$ORG/drafts/draft-apis" \
                -H "Authorization: Bearer $TOKEN" \
-               -H "Accept: application/json")
-          
-          if echo "$CAT_CHECK" | grep -q "\"name\""; then
-            echo "✅ Akses Katalog Berhasil!"
-            echo "Katalog yang ditemukan:"
-            echo "$CAT_CHECK" | jq -r '.results[].title'
+               -H "Accept: application/json" \
+               -H "Content-Type: application/json" \
+               -d @"$FILE_PATH")
+
+          if echo "$UPLOAD_RES" | grep -q "\"name\""; then
+            echo "✅ API Berhasil di-upload ke Drafts!"
+            echo "Nama API: $(echo $UPLOAD_RES | jq -r .title)"
           else
-            echo "❌ Akses Katalog Gagal."
-            echo "$CAT_CHECK" | jq .
+            echo "❌ Upload Gagal!"
+            echo "$UPLOAD_RES" | jq .
+            exit 1
           fi
