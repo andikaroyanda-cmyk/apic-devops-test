@@ -1,0 +1,52 @@
+swagger: '2.0'
+info:
+  title: JNE Tracking API Official
+  description: API untuk melakukan pelacakan resi JNE secara real-time.
+  version: 1.0.0
+  contact:
+    name: Andika DevOps Team
+    email: andika@example.com
+
+# Wajib ada agar APIC tidak error
+x-ibm-configuration:
+  enforced: true
+  phase: realized
+  testable: true
+  gateway: datapower-api-gateway
+  assembly:
+    execute:
+      - invoke:
+          title: invoke-jne-backend
+          version: 1.0.0
+          verb: GET
+          target-url: 'https://api.jne.co.id/tracing/api/list/v1/cnote/{resi}'
+
+host: api.jne.co.id
+basePath: /v1
+schemes:
+  - https
+
+paths:
+  /track/{resi}:
+    get:
+      summary: Cek Status Resi
+      description: Mengambil data status pengiriman berdasarkan nomor resi (AWB).
+      parameters:
+        - name: resi
+          in: path
+          description: Nomor resi JNE
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Data ditemukan
+        '404':
+          description: Resi tidak valid
+
+securityDefinitions:
+  clientID:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+security:
+  - clientID: []
