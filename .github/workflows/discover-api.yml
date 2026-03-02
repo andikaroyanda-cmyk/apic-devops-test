@@ -1,62 +1,37 @@
-name: Sync API to APIC Drafts
-
-on: [push, workflow_dispatch]
-
-jobs:
-  sync-api:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Get Access Token & Push API
+- name: Get Access Token & Push API
         env:
           MY_API_KEY: ${{ secrets.APIC_APIKEY_ANDIKA_2026 }}
           ORG: env5717743
           SERVER: platform-api.us-east-a.apiconnect.automation.ibm.com
-          FILE_PATH: "path/ke/file/api_anda.json" # GANTI DENGAN PATH FILE JSON ANDA
+          FILE_PATH: "path/ke/file/api_anda.json" 
         run: |
-          # 1. Mendapatkan Access Token (Sesuai Gambar Anda)
           echo "### STEP 1: LOGIN ###"
+          
+          # Kita buat file json sementara agar pengiriman datanya 'aman'
+          cat <<EOF > login_data.json
+          {
+            "api_key": "$MY_API_KEY",
+            "grant_type": "api_key",
+            "client_id": "149625d1-de09-46e1-903a-3c0957097c2f",
+            "client_secret": "3d7e8f4f-d562-40ce-88de-a656f6b13f9e"
+          }
+          EOF
+
+          # Kirim menggunakan file tersebut
           RESPONSE=$(curl -s -X POST "https://$SERVER/api/token" \
                -H "Content-Type: application/json" \
                -H "Accept: application/json" \
-               -d "{
-                 \"api_key\": \"$MY_API_KEY\",
-                 \"grant_type\": \"api_key\",
-                 \"client_id\": \"149625d1-de09-46e1-903a-3c0957097c2f\",
-                 \"client_secret\": \"3d7e8f4f-d562-40ce-88de-a656f6b13f9e\"
-               }")
+               -d @login_data.json)
 
           TOKEN=$(echo $RESPONSE | jq -r .access_token)
 
-          if [ "$TOKEN" == "null" ]; then
-            echo "❌ Login Gagal!"
+          if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
+            echo "❌ Login Gagal! Respons server:"
             echo "$RESPONSE" | jq .
             exit 1
           fi
-          echo "✅ Login Berhasil."
+          echo "✅ Login Berhasil. Token didapatkan."
 
-          # 2. Push File API ke Drafts (Provider Org)
-          echo "### STEP 2: PUSH API KE DRAFTS ###"
-          
-          # Pastikan file ada
-          if [ ! -f "$FILE_PATH" ]; then
-            echo "❌ File $FILE_PATH tidak ditemukan!"
-            exit 1
-          fi
-
-          UPLOAD_RES=$(curl -s -X POST "https://$SERVER/api/orgs/$ORG/drafts/draft-apis" \
-               -H "Authorization: Bearer $TOKEN" \
-               -H "Accept: application/json" \
-               -H "Content-Type: application/json" \
-               -d @"$FILE_PATH")
-
-          if echo "$UPLOAD_RES" | grep -q "\"name\""; then
-            echo "✅ API Berhasil di-upload ke Drafts!"
-            echo "Nama API: $(echo $UPLOAD_RES | jq -r .title)"
-          else
-            echo "❌ Upload Gagal!"
-            echo "$UPLOAD_RES" | jq .
-            exit 1
-          fi
+          # Lanjutkan ke Step Upload (sama seperti sebelumnya)
+          echo "### STEP 2: UPLOAD ###"
+          # ... rest of your upload script ...
