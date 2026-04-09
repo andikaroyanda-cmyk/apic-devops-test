@@ -3,12 +3,13 @@ name: Sync Discovered API with APIConnect
 on: [pull_request, workflow_dispatch, push]
 
 env:
+  # Coba gunakan hostname langsung dari URL Manager kamu
   API_HOST: dev4501662.a-syd-c1.apiconnect.ipaas.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: dev4501662
   API_FILES: api-test.yaml
-  # Tambahkan variabel Node.js agar tidak muncul warning deprecation
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Mematikan validasi TLS Node.js secara global untuk step ini
+  NODE_TLS_REJECT_UNAUTHORIZED: 0
 
 jobs:
   run-discovery:
@@ -16,34 +17,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Penting agar git diff bisa membandingkan commit sebelumnya
+        fetch-depth: 0
 
     - name: Difference
       id: difference-output
       run: |
-        # Menggunakan sha sebelumnya atau default ke HEAD~1 jika push pertama
         PREV_SHA=${{ github.event.before }}
         if [ "$PREV_SHA" == "0000000000000000000000000000000000000000" ]; then
           PREV_SHA="HEAD~1"
         fi
         echo "action_updates=$(git diff --name-only --diff-filter=ACMRT $PREV_SHA ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
     
-    - uses: ibm-apiconnect/apic-discovery-action@main
+    - name: Run APIC Discovery
+      uses: ibm-apiconnect/apic-discovery-action@main
       id: discover-apis
       with:
         api_host: ${{ env.API_HOST }}
         platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
         provider_org: ${{ env.PROVIDER_ORG }}
         api_key: ${{ secrets.Key_api }}
-        # Hapus 'if' dan 'else if' dari sini. 
-        # Jika API_FILES ada nilainya, ia akan terbaca. Jika kosong, tidak masalah.
         api_files: ${{ env.API_FILES }}
         resync_check: true
         git_diff: ${{ steps.difference-output.outputs.action_updates }}
-        # SOLUSI untuk error SSL Handshake (alert 40):
-        insecure_skip_tls_verify: true
-
-    - name: Display the action-result
-      run: |
-        echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
-        echo "End"
+        insecure_skip_tls_verify: true # Pastikan ini tetap true
