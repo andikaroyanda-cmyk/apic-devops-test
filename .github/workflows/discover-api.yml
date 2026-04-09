@@ -1,59 +1,46 @@
 name: Sync Discovered API with APIConnect
 
-on: 
-  pull_request:
-  workflow_dispatch:
-  push:
-    branches:
-      - main  # Atau sesuaikan dengan branch utama kamu
+on: [pull_request, workflow_dispatch, push]
 
 env:
-  # Host untuk iPaaS Sydney biasanya menggunakan prefix 'api' atau langsung domain manager
-  API_HOST: api.a-syd-c1.apiconnect.ipaas.automation.ibm.com
+  API_HOST: us-east-a.apiconnect.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
-  PROVIDER_ORG: dev4501662
-  API_FILES: api-test.yaml
-  # Memaksa penggunaan Node 24 untuk menghindari warning deprecation
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # Bypass validasi TLS di level Node.js untuk menangani SSL Alert 40
-  NODE_TLS_REJECT_UNAUTHORIZED: 0
+  PROVIDER_ORG: env5717743
+  API_FILES: openapi2.yaml
 
 jobs:
   run-discovery:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Penting agar git diff bisa bekerja
-
-      - name: Calculate Git Diff
-        id: difference-output
-        run: |
-          # Logika untuk mendapatkan file yang berubah
-          PREV_SHA=${{ github.event.before }}
-          if [ "$PREV_SHA" == "0000000000000000000000000000000000000000" ] || [ -z "$PREV_SHA" ]; then
-            PREV_SHA="HEAD~1"
-          fi
-          DIFF=$(git diff --name-only --diff-filter=ACMRT $PREV_SHA ${{ github.sha }} | xargs)
-          echo "action_updates=$DIFF" >> $GITHUB_OUTPUT
-
-      - name: Run APIC Discovery
-        uses: ibm-apiconnect/apic-discovery-action@main
-        id: discover-apis
-        with:
-          api_host: ${{ env.API_HOST }}
-          platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
-          provider_org: ${{ env.PROVIDER_ORG }}
-          api_key: ${{ secrets.Key_api }}
-          api_files: ${{ env.API_FILES }}
-          resync_check: true
-          git_diff: ${{ steps.difference-output.outputs.action_updates }}
-          # Bypass SSL di level Action
-          insecure_skip_tls_verify: true
-
-      - name: Display Result
-        if: always() # Tetap munculkan hasil meskipun step sebelumnya error
-        run: |
-          echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
-          echo "Process Finished"
+    - uses: actions/checkout@v4
+    #   with:
+    #     fetch-depth: 2
+    
+    # - name: Validate API Governance (Spectral)
+    #   run: |
+    #     npm install -g @stoplight/spectral-cli
+    #     spectral lint ${{ env.API_FILES }} --ruleset .spectral.yaml
+    
+    - name: Difference
+      id: difference-output
+      run: |
+        echo "action_updates=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.before }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
+    
+    - uses: ibm-apiconnect/apic-discovery-action@main
+      id: discover-apis
+      with:
+        api_host: ${{ env.API_HOST }}
+        platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
+        provider_org: ${{ env.PROVIDER_ORG }}
+        api_key: ${{ secrets.apicApikey }}
+        if: env.API_FILES
+        api_files: ${{ env.API_FILES }}
+        else if: env.API_FOLDERS
+        api_folders: ${{ env.API_FOLDERS }}
+        resync_check: ${{ true }}
+        git_diff: ${{ steps.difference-output.outputs.action_updates }}
+    
+    - name: Display the action-result
+      run: |
+        echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
+        echo "End"
