@@ -7,7 +7,7 @@ env:
   API_HOST: us-east-a.apiconnect.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: env9375973
-  API_FILES: Api_2026
+  API_FOLDERS: Api_2026
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
