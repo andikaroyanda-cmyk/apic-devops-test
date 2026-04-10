@@ -1,0 +1,67 @@
+swagger: '2.0'
+info:
+  x-ibm-name: jne-track v2
+  title: API JNE Express Tracking & Tariff
+  version: 2.1.4
+  description: API v2 untuk integrasi layanan tracking pengiriman JNE.
+host: $(catalog.host)
+basePath: /jne/v2
+schemes:
+  - https
+produces:
+  - application/json
+consumes:
+  - application/json
+
+x-ibm-configuration:
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+      - parse:
+          version: 2.2.0
+          title: parse
+          parse-settings-reference:
+            parse-settings:
+              document_type: json
+          use-content-type: true
+      - invoke:
+          version: 2.0.0
+          title: Panggil Backend Tracking
+          # Gunakan variabel yang lebih standar untuk APIC
+          target-url: 'https://jsonplaceholder.typicode.com/users?id=$(api.parameters.id)'
+          verb: GET
+  activity-log:
+    enabled: true
+    success-content: activity
+    error-content: payload
+
+paths:
+  /track:
+    get:
+      summary: Cek status pengiriman berdasarkan ID
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: integer
+          format: int64
+          description: Nomor AWB atau ID Tracking
+      responses:
+        '200':
+          description: Data tracking ditemukan
+        '401':
+          description: Unauthorized
+
+securityDefinitions:
+  client-id:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+security:
+  - client-id: []
