@@ -3,7 +3,7 @@ info:
   x-ibm-name: jne-tracking-tariff-v2
   title: API JNE Express Tracking & Tariff
   version: 2.0.0
-  description: API v2 untuk integrasi layanan tracking pengiriman dan kalkulasi tarif JNE Express secara real-time.
+  description: API v2 untuk integrasi layanan tracking pengiriman JNE.
 host: $(catalog.host)
 basePath: /jne/v2
 schemes:
@@ -33,7 +33,8 @@ x-ibm-configuration:
       - invoke:
           version: 2.0.0
           title: Panggil Backend Tracking
-          target-url: https://jsonplaceholder.typicode.com/users?id=$(request.parameters.id)
+          # Gunakan variabel yang lebih standar untuk APIC
+          target-url: 'https://jsonplaceholder.typicode.com/users?id=$(api.parameters.id)'
           verb: GET
   activity-log:
     enabled: true
@@ -55,7 +56,7 @@ paths:
         '200':
           description: Data tracking ditemukan
         '401':
-          description: Unauthorized - Client ID tidak valid
+          description: Unauthorized
 
 securityDefinitions:
   client-id:
