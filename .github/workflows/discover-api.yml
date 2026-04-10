@@ -35,7 +35,7 @@ jobs:
           api_host: ${{ env.API_HOST }}
           platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
           provider_org: ${{ env.PROVIDER_ORG }}
-          api_key: ${{ secrets.Key_api }}
+          api_key: ${{ secrets.KEY_API }}
           api_files: ${{ env.API_FILES }}
           resync_check: true
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
