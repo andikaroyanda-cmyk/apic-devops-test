@@ -1,0 +1,450 @@
+swagger: '2.0'
+info:
+  title: hello
+  x-ibm-name: hello
+  version: 1.0.0
+x-ibm-configuration:
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+      - operation-switch:
+          version: 2.0.0
+          title: operation-switch
+          case:
+            - operations:
+                - verb: get
+                  path: /
+              execute:
+                - gatewayscript:
+                    version: 2.0.0
+                    title: getscript
+                    description: ''
+                    source: >-
+                      //var name = context.get('request.body');
+
+                      //var name = context.get('request.parameters.nama');
+
+                      var name =
+                      context.get('request.parameters.nama.values[0]');
+
+                      //console.info("hasil1 : ", name);
+
+                      //console.info("hasil2 : ", name.values[0]);
+
+                      //console.info("hasil3 : ", name.locations[0]);
+
+                      context.message.header.set('Content-Type',
+                      'application/json');
+
+                      context.message.body.write({"msg": "hello "+name+""});
+            - operations:
+                - verb: post
+                  path: /
+              execute:
+                - gatewayscript:
+                    version: 2.0.0
+                    title: postscript
+                    source: >-
+                      var name = context.get('message.body.nama');
+
+                      //var name = context.get('request.parameters.nama');
+
+                      //var name =
+                      context.get('request.parameters.nama.values[0]');
+
+                      console.info("hasil1 : ", name);
+
+                      //console.info("hasil2 : ", name.values[0]);
+
+                      //console.info("hasil3 : ", name.locations[0]);
+
+                      context.message.header.set('Content-Type',
+                      'application/json');
+
+                      context.message.body.write({"msg": "hello "+name+""});
+          otherwise: []
+    finally: []
+  properties:
+    target-url:
+      value: http://example.com/operation-name
+      description: The URL of the target service
+      encoded: false
+  activity-log:
+    enabled: true
+    success-content: activity
+    error-content: payload
+  targets:
+    financingService:
+      swagger: '2.0'
+      info:
+        title: financingService
+        description: ''
+        x-ibm-name: financingservice
+        version: 1.0.0
+      schemes:
+        - https
+      basePath: /financingService
+      produces:
+        - application/xml
+      consumes:
+        - text/xml
+      securityDefinitions:
+        clientID:
+          type: apiKey
+          name: X-IBM-Client-Id
+          in: header
+          description: ''
+        oauth:
+          type: oauth2
+          x-ibm-oauth-provider: native-oauth
+          flow: accessCode
+          authorizationUrl: https://$(catalog.url)/native-oauth/oauth2/authorize
+          tokenUrl: https://$(catalog.url)/native-oauth/oauth2/token
+          scopes:
+            all: all
+      security:
+        - clientID: []
+        - oauth: []
+      x-ibm-configuration:
+        type: wsdl
+        phase: realized
+        enforced: true
+        testable: true
+        gateway: datapower-api-gateway
+        cors:
+          enabled: true
+        wsdl-definition:
+          wsdl: financingService
+          service: financingService
+          port: financingPort
+          soap-version: '1.1'
+        assembly:
+          execute:
+            - invoke:
+                title: invoke
+                target-url: >-
+                  http://calculator-http-ace.apps.ocp-060001q8qm-ada2.cloud.techzone.ibm.com/financing/calculate
+                version: 2.0.0
+                header-control:
+                  type: blocklist
+                  values: []
+                parameter-control:
+                  type: blocklist
+                  values: []
+        x-ibm-apiconnect-wsdl:
+          package-version: 2.0.36
+          options: {}
+          messages:
+            info: []
+            warning: []
+            error: []
+      paths:
+        /financing:
+          post:
+            summary: Operation financing
+            description: ''
+            operationId: financing
+            x-ibm-soap:
+              soap-action: http://thinkibm-services.mybluemix.net/financing
+              soap-operation: '{http://thinkibm-services.mybluemix.net}financingRequest'
+            parameters:
+              - in: body
+                name: body
+                required: true
+                schema:
+                  $ref: >-
+                    #/x-ibm-configuration/targets/financingService/definitions/financingInput
+            responses:
+              default:
+                description: ''
+                schema:
+                  $ref: >-
+                    #/x-ibm-configuration/targets/financingService/definitions/financingOutput
+      definitions:
+        Security:
+          xml:
+            namespace: >-
+              http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+            prefix: wsse
+          description: Header for WS-Security
+          type: object
+          properties:
+            UsernameToken:
+              xml:
+                namespace: >-
+                  http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+                prefix: wsse
+              type: object
+              properties:
+                Username:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+                    prefix: wsse
+                  type: string
+                Password:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+                    prefix: wsse
+                  type: string
+                Nonce:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd
+                    prefix: wsse
+                  type: string
+                  properties:
+                    EncodingType:
+                      xml:
+                        namespace: ''
+                        attribute: true
+                      type: string
+                Created:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+                    prefix: wsu
+                  type: string
+            Timestamp:
+              xml:
+                namespace: >-
+                  http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+                prefix: wsu
+              type: object
+              properties:
+                Created:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+                    prefix: wsu
+                  type: string
+                Expires:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+                    prefix: wsu
+                  type: string
+                Id:
+                  xml:
+                    namespace: >-
+                      http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd
+                    prefix: wsu
+                    attribute: true
+                  type: string
+        financingInput:
+          description: Input message for wsdl operation financingRequest
+          type: object
+          properties:
+            Envelope:
+              xml:
+                namespace: http://schemas.xmlsoap.org/soap/envelope/
+                prefix: soapenv
+              type: object
+              properties:
+                Header:
+                  $ref: >-
+                    #/x-ibm-configuration/targets/financingService/definitions/financingHeader
+                Body:
+                  xml:
+                    namespace: http://schemas.xmlsoap.org/soap/envelope/
+                    prefix: soapenv
+                  type: object
+                  properties:
+                    financingRequest:
+                      $ref: >-
+                        #/x-ibm-configuration/targets/financingService/definitions/financingRequest_element_ser
+                  required:
+                    - financingRequest
+              required:
+                - Body
+          required:
+            - Envelope
+          x-ibm-schema:
+            wsdl-port: '{http://thinkibm-services.mybluemix.net}financingPort'
+            wsdl-operation: financingRequest
+            wsdl-message-direction-or-name: financingRequestRequest
+          example: >-
+
+            <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+             <soapenv:Header>
+              <!-- The Security element should be removed if WS-Security is not enabled on the SOAP target-url -->
+              <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+               <wsse:UsernameToken>
+                <wsse:Username>string</wsse:Username>
+                <wsse:Password>string</wsse:Password>
+                <wsse:Nonce EncodingType="string">string</wsse:Nonce>
+                <wsu:Created>string</wsu:Created>
+               </wsse:UsernameToken>
+               <wsu:Timestamp wsu:Id="string">
+                <wsu:Created>string</wsu:Created>
+                <wsu:Expires>string</wsu:Expires>
+               </wsu:Timestamp>
+              </wsse:Security>
+             </soapenv:Header>
+             <soapenv:Body>
+              <ser:financingRequest xmlns:ser="http://thinkibm-services.mybluemix.net"><!-- mandatory -->
+               <ser:amount><!-- mandatory -->3</ser:amount>
+               <ser:duration><!-- mandatory -->3</ser:duration>
+               <ser:rate><!-- mandatory -->3</ser:rate>
+              </ser:financingRequest>
+             </soapenv:Body>
+            </soapenv:Envelope>
+        financingHeader:
+          description: Input headers for wsdl operation financingRequest
+          type: object
+          properties:
+            Security:
+              $ref: >-
+                #/x-ibm-configuration/targets/financingService/definitions/Security
+        financingOutput:
+          description: Output message for wsdl operation financingRequest
+          type: object
+          properties:
+            Envelope:
+              xml:
+                namespace: http://schemas.xmlsoap.org/soap/envelope/
+                prefix: soapenv
+              type: object
+              properties:
+                Body:
+                  xml:
+                    namespace: http://schemas.xmlsoap.org/soap/envelope/
+                    prefix: soapenv
+                  type: object
+                  properties:
+                    financingResult:
+                      $ref: >-
+                        #/x-ibm-configuration/targets/financingService/definitions/financingResult_element_ser
+              required:
+                - Body
+          required:
+            - Envelope
+          x-ibm-schema:
+            wsdl-port: '{http://thinkibm-services.mybluemix.net}financingPort'
+            wsdl-operation: financingRequest
+            wsdl-message-direction-or-name: financingRequestResponse
+          example: >-
+
+            <soapenv:Envelope
+            xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+             <soapenv:Body>
+              <ser:financingResult xmlns:ser="http://thinkibm-services.mybluemix.net">
+               <ser:paymentAmount><!-- mandatory -->3</ser:paymentAmount>
+              </ser:financingResult>
+             </soapenv:Body>
+            </soapenv:Envelope>
+        financingRequest_element_ser:
+          xml:
+            namespace: http://thinkibm-services.mybluemix.net
+            prefix: ser
+            name: financingRequest
+          type: object
+          properties:
+            amount:
+              xml:
+                namespace: http://thinkibm-services.mybluemix.net
+                prefix: ser
+              type: number
+            duration:
+              xml:
+                namespace: http://thinkibm-services.mybluemix.net
+                prefix: ser
+              type: number
+            rate:
+              xml:
+                namespace: http://thinkibm-services.mybluemix.net
+                prefix: ser
+              type: number
+          required:
+            - amount
+            - duration
+            - rate
+          example: >-
+
+            <ser:financingRequest
+            xmlns:ser="http://thinkibm-services.mybluemix.net">
+             <ser:amount><!-- mandatory -->3</ser:amount>
+             <ser:duration><!-- mandatory -->3</ser:duration>
+             <ser:rate><!-- mandatory -->3</ser:rate>
+            </ser:financingRequest>
+        financingResult_element_ser:
+          xml:
+            namespace: http://thinkibm-services.mybluemix.net
+            prefix: ser
+            name: financingResult
+          type: object
+          properties:
+            paymentAmount:
+              xml:
+                namespace: http://thinkibm-services.mybluemix.net
+                prefix: ser
+              type: number
+          required:
+            - paymentAmount
+          example: >-
+
+            <ser:financingResult
+            xmlns:ser="http://thinkibm-services.mybluemix.net">
+             <ser:paymentAmount><!-- mandatory -->3</ser:paymentAmount>
+            </ser:financingResult>
+basePath: /hello
+paths:
+  /:
+    get:
+      responses:
+        '200':
+          description: success
+          schema:
+            type: string
+      parameters:
+        - name: nama
+          in: query
+          type: string
+    post:
+      responses:
+        '200':
+          description: success
+          schema:
+            type: string
+      parameters:
+        - name: nama
+          required: true
+          in: body
+          schema:
+            type: string
+            properties:
+              nama:
+                type: string
+securityDefinitions:
+  clientID:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+    x-key-type: client_id
+  clientSecret:
+    type: apiKey
+    x-key-type: client_secret
+    name: X-IBM-Client-Secret
+    in: header
+  oauth:
+    type: oauth2
+    x-ibm-oauth-provider: native-oauth
+    flow: application
+    tokenUrl: https://$(catalog.url)/native-oauth/oauth2/token
+    scopes:
+      all: all
+security:
+  - clientID: []
+    clientSecret: []
+  - oauth:
+      - all
+schemes:
+  - https
