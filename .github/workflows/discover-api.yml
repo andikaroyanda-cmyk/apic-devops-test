@@ -3,8 +3,7 @@ name: Sync Discovered API with APIConnect
 on: [pull_request, workflow_dispatch, push]
 
 env:
-  # Berdasarkan dokumen IBM SaaS: Host harus menggunakan regional endpoint
-  # Untuk Sydney iPaaS, host ini adalah yang paling tepat (tanpa platform-api prefix di variabel host)
+
   API_HOST: ap-southeast-a.apiconnect.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: dev4501662
@@ -33,7 +32,6 @@ jobs:
         uses: ibm-apiconnect/apic-discovery-action@main
         id: discover-apis
         with:
-          # Input ini harus sesuai dengan yang diminta di dokumentasi konfigurasi kolektor
           api_host: ${{ env.API_HOST }}
           platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
           provider_org: ${{ env.PROVIDER_ORG }}
@@ -41,5 +39,4 @@ jobs:
           api_files: ${{ env.API_FILES }}
           resync_check: true
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
-          # IBM SaaS seringkali butuh skip TLS karena sertifikat internal Cloudflare
           insecure_skip_tls_verify: true
