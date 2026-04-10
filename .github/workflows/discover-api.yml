@@ -6,7 +6,7 @@ env:
   # Berdasarkan dokumen IBM SaaS: Host harus menggunakan regional endpoint
   # Untuk Sydney iPaaS, host ini adalah yang paling tepat (tanpa platform-api prefix di variabel host)
   API_HOST: ap-southeast-a.apiconnect.automation.ibm.com
-  PLATFORM_API_PREFIX: platform-api
+  PLATFORM_API_PREFIX: platform-api/api
   PROVIDER_ORG: dev4501662
   API_FILES: api-test.yaml
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
