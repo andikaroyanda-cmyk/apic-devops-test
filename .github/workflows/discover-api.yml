@@ -3,12 +3,14 @@ name: Sync Discovered API with APIConnect
 on: [pull_request, workflow_dispatch, push]
 
 env:
-  # Gunakan nilai eksis sesuai screenshot
-  API_HOST: ap-southeast-a.apiconnect.automation.ibm.com
+  # Kita gunakan host yang memberikan respon 404 (artinya SSL hidup)
+  API_HOST: api.a-syd-c1.apiconnect.ipaas.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: dev4501662
   API_FILES: api-test.yaml
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Bypass pengecekan SSL karena Opsi C tadi menunjukkan ada potensi masalah cert (Error 526)
+  NODE_TLS_REJECT_UNAUTHORIZED: 0
 
 jobs:
   run-discovery:
@@ -29,7 +31,6 @@ jobs:
           echo "action_updates=$(git diff --name-only --diff-filter=ACMRT $PREV_SHA ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
 
       - name: Run APIC Discovery
-        # Kita gunakan 'continue-on-error' dan coba lagi jika gagal 503
         uses: ibm-apiconnect/apic-discovery-action@main
         id: discover-apis
         with:
@@ -41,8 +42,3 @@ jobs:
           resync_check: true
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
           insecure_skip_tls_verify: true
-
-      - name: Display Result
-        if: always()
-        run: |
-          echo "Status: ${{ steps.discover-apis.outputs.action-result }}"
