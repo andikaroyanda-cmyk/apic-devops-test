@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   x-ibm-name: test-api
-  version: 2.0.2
+  version: 2.0.3
   description: API untuk mengelola data user.
   title: API JNE Express Tracking 911
 host: $(catalog.host)
