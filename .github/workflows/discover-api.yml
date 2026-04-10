@@ -39,7 +39,7 @@ jobs:
           provider_org: ${{ env.PROVIDER_ORG }}
           api_key: ${{ secrets.Key_api }}
           api_files: ${{ env.API_FILES }}
-          resync_check: true
+          resync_check: false
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
           # IBM SaaS seringkali butuh skip TLS karena sertifikat internal Cloudflare
           insecure_skip_tls_verify: true
