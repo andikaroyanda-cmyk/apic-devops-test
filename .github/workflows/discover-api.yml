@@ -36,7 +36,7 @@ jobs:
           platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
           provider_org: ${{ env.PROVIDER_ORG }}
           api_key: ${{ secrets.Kunci_API }}
-          api_files: ${{ env.API_FILES }}
+          api_folders: ${{ env.API_FOLDERS }}
           resync_check: true
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
           insecure_skip_tls_verify: true
