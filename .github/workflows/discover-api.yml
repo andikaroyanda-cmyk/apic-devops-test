@@ -3,43 +3,46 @@ name: Sync Discovered API with APIConnect
 on: [pull_request, workflow_dispatch, push]
 
 env:
+  # SESUAI GAMBAR: Gunakan host Singapore meskipun manager ada di Sydney
   API_HOST: ap-southeast-a.apiconnect.automation.ibm.com
   PLATFORM_API_PREFIX: platform-api
   PROVIDER_ORG: dev4501662
   API_FILES: api-test.yaml
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   run-discovery:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Difference
+      - name: Calculate Git Diff
         id: difference-output
         run: |
-          # Logika untuk mendapatkan daftar file yang berubah
           PREV_SHA=${{ github.event.before }}
           if [ "$PREV_SHA" == "0000000000000000000000000000000000000000" ] || [ -z "$PREV_SHA" ]; then
             PREV_SHA="HEAD~1"
           fi
           echo "action_updates=$(git diff --name-only --diff-filter=ACMRT $PREV_SHA ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
 
-      - uses: ibm-apiconnect/apic-discovery-action@main
+      - name: Run APIC Discovery
+        uses: ibm-apiconnect/apic-discovery-action@main
         id: discover-apis
         with:
           api_host: ${{ env.API_HOST }}
           platform_api_prefix: ${{ env.PLATFORM_API_PREFIX }}
           provider_org: ${{ env.PROVIDER_ORG }}
           api_key: ${{ secrets.Key_api }}
-          # Menghapus logika if/else if yang dilarang di dalam blok 'with'
           api_files: ${{ env.API_FILES }}
           resync_check: true
           git_diff: ${{ steps.difference-output.outputs.action_updates }}
+          # Tetap gunakan ini untuk menjaga stabilitas koneksi di GitHub Runner
           insecure_skip_tls_verify: true
 
-      - name: Display the action-result
+      - name: Display Result
+        if: always()
         run: |
           echo "Result of the action: ${{ steps.discover-apis.outputs.action-result }}"
-          echo "End"
