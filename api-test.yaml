@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   x-ibm-name: jne-tracking-tariff-v2
   title: API JNE Express Tracking & Tariff
-  version: 2.0.2
+  version: 2.0.3
   description: API v2 untuk integrasi layanan tracking pengiriman JNE.
 host: $(catalog.host)
 basePath: /jne/v2
