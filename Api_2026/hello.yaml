@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  title: helloo
+  title: jne_helloo
   x-ibm-name: hello
   version: 1.0.2
 x-ibm-configuration:
